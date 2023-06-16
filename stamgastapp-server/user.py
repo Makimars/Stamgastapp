@@ -11,12 +11,12 @@ def get_auth_token(username: str, password: str):
     database.cursor.execute(sql)
     result = database.cursor.fetchone()
 
-    if result['password'] != password:
+    if result[0] != password:
         print("bad password or username")
         raise Exception
 
     token = hashlib.md5((username + str(datetime.datetime.now())).encode('utf-8')).hexdigest()
-    sql = ('insert into tokens (user_id, token) values (%s, "%s");' % (result['user_id'], str(token)))
+    sql = ('insert into tokens (user_id, token) values (%s, "%s");' % (result[1], str(token)))
 
     print(sql)
 
@@ -59,6 +59,7 @@ def register_new_user(username: str, password: str):
 
 # get user_id from token and assure that the token is valid
 def login_with_token(token: str):
+    max_age_of_token = 365
     sql = 'SELECT user_id, created_at FROM tokens WHERE token = "%s" ORDER BY created_at DESC;' % token
     database.cursor.execute(sql)
     result = database.cursor.fetchone()
@@ -66,16 +67,16 @@ def login_with_token(token: str):
     if len(result) != 2:
         raise Exception("Invalid token")
     else:
-        user_id = result['user_id']
-        created_at = datetime.datetime.fromisoformat(str(result['created_at']))
+        user_id = result[0]
+        created_at = datetime.datetime.fromisoformat(str(result[1]))
 
-        if datetime.datetime.now() - created_at > datetime.timedelta(days=365):
+        if datetime.datetime.now() - created_at > datetime.timedelta(days=max_age_of_token):
             raise Exception("Expired token")
         else:
             return user_id
 
 
-def load_friends(user_id):
+def get_friends(user_id):
     sql = """
     SELECT username, profile_picture, created_at FROM(
             SELECT * FROM users RIGHT JOIN 
@@ -91,6 +92,7 @@ def load_friends(user_id):
     return database.cursor.fetchall()
 
 
+# TODO: check if exists, if so, don't add another one
 def send_friend_request(user_id: int, target_user_id: int):
     sql = 'INSERT INTO friends (requester_user_id, target_user_id) VALUES (%s, %s);'
     database.cursor.execute(sql, [user_id, target_user_id])
@@ -99,7 +101,12 @@ def send_friend_request(user_id: int, target_user_id: int):
 
 # loads incoming friend requests
 def load_friend_requests(user_id: int):
-    sql = 'SELECT * FROM friends WHERE target_user_id = %s AND accepted = FALSE;'
+    sql = """
+    SELECT friendship_id, username, user_id, profile_picture FROM
+        (SELECT * FROM friends WHERE target_user_id = %s AND accepted = FALSE) AS friends
+    LEFT JOIN users ON 
+        friends.requester_user_id = users.user_id;
+    """
     database.cursor.execute(sql, [user_id])
     return database.cursor.fetchall()
 

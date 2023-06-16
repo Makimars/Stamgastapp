@@ -1,14 +1,18 @@
-# Authentication
+# Authentication /auth
 
-## login
+## /auth/login
 
-request POST /auth/login {
+GET request
 
-username : "email",
+{
+
+username : "username",
 
 password : "pass"
 
 }
+
+
 
 response : {
 
@@ -16,40 +20,54 @@ token : "token"
 
 }
 
-## register
+## /auth/register
 
-TBD
+POST request 
+
+{
+
+username : "username",
+
+password : "pass"
+
+}
+
+
+
+response: "success", 201
 
 ## change password
 
 TBD
 
-# Posts
+# Users /user
 
-## post new
+## /user/friends/<user_token>
 
-request POST /post/new {
+#### GET
 
-user_token : "",
+#### POST
 
-post: {
+#### PUT
 
-    brand : "",
+#### DELETE
 
-    type : "",
+## /user/friend-requests/<user_token>
 
-    amount : "",
+GET
 
-    review : {},
+## /user/search/<user_token>
 
-    picture : "",
+GET
 
-    pub_id : ""
+# Posts /post
 
-    }
+## /posts/<user_token>
 
-}
+GET
 
-## load friend's posts
+{"own":"true"}
 
-## load my posts
+POST
+
+DELETE
