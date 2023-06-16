@@ -1,0 +1,5 @@
+connections.txt
+config
+venv
+__pycache__
+.idea
