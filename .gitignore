@@ -3,3 +3,10 @@ config
 venv
 __pycache__
 .idea
+<<<<<<< Updated upstream
+=======
+*/post_pictures/*
+*/profile_pictures/*
+!stamgastapp-server/post_pictures/default.jpg
+!stamgastapp-server/profile_pictures/default.jpg
+>>>>>>> Stashed changes
