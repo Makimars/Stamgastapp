@@ -22,6 +22,6 @@ def get_connection():
             print("Database does not exist")
         else:
             print(err)
-
+        raise Exception("database connection failed")
     else:
         return cnx

@@ -1,17 +1,18 @@
 # interact with posts, load and save
+import os.path
+
 from mysql.connector import MySQLConnection
 
 import database
 
 
 def submit_post(user_id: int, name: str, type: str, volume: float, review: str = "", picture: str = ""):
-    max_post_length = 500
+    max_post_length = 1000
     if len(review) > max_post_length:
-        print("too long review")
-        raise Exception()
+        raise Exception("too long review")
 
-    sql = 'INSERT INTO posts (user_id, name, type, volume, review) VALUES (%s, %s, %s, %s, %s);'
-    data = (user_id, name, type, volume, review)
+    sql = 'INSERT INTO posts (user_id, name, type, volume, review, picture) VALUES (%s, %s, %s, %s, %s, %s);'
+    data = (user_id, name, type, volume, review, picture)
 
     database.cursor.execute(sql, data)
     database.connection.commit()
@@ -48,6 +49,16 @@ def load_posts(user_id: int, own: bool, start: int = 0):
 
 
 def delete_post(user_id: str, post_id: str):
+    sql = "SELECT picture FROM posts WHERE user_id = %s AND post_id = %s"
+    database.cursor.execute(sql, [user_id, post_id])
+    result = database.cursor.fetchone()
+    if result is None:
+        raise Exception("post not found")
+    if result[0] != "default":
+        path = os.path.join("post_pictures", result[0] + ".jpg")
+        if os.path.exists(path):
+            os.remove(path)
+
     sql = "DELETE FROM posts WHERE user_id = %s AND post_id = %s"
 
     database.cursor.execute(sql, [user_id, post_id])

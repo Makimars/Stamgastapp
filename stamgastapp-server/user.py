@@ -68,12 +68,13 @@ def search(pattern: str):
 def set_profile_picture(user_id: int, profile_picture_filename: str):
     sql = "SELECT user_id, profile_picture FROM users WHERE user_id = %s"
     database.cursor.execute(sql, [user_id])
-    result = database.cursor.fetchall()
+    result = database.cursor.fetchone()
 
     if len(result) > 1:
-        old_file = "profile_pictures/" + result[1] + ".jpg"
+        old_file = os.path.join("profile_pictures", (result[1] + ".jpg"))
         if os.path.exists(old_file):
             os.remove(old_file)
 
     sql = "UPDATE users SET profile_picture = %s WHERE user_id = %s"
     database.cursor.execute(sql, [profile_picture_filename, user_id])
+    database.connection.commit()

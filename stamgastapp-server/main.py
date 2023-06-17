@@ -1,4 +1,8 @@
+import datetime
+
 from flask import Flask, request, jsonify
+import os
+import hashlib
 
 import database
 import post
@@ -99,7 +103,6 @@ def load_posts(user_token):
     return jsonify(results), 200
 
 
-
 @app.route("/posts/<user_token>", methods=["DELETE"])
 def delete_post(user_token):
     user_id = auth.login_with_token(user_token)
@@ -107,6 +110,7 @@ def delete_post(user_token):
 
     post.delete_post(user_id, post_id)
     return "success", 200
+
 
 @app.route("/posts/<user_token>", methods=["POST"])
 def new_post(user_token):
@@ -116,16 +120,46 @@ def new_post(user_token):
     drink_type = request.args.get("type")
     volume = request.args.get("volume")
     review = request.args.get("review")
-    picture = request.args.get("picture")
+    picture_filename = "default"
 
     if name is None:
         return "name cannot be null", 400
+    if drink_type is None:
+        drink_type = "jiné"
 
-    post.submit_post(user_id, name, drink_type, float(volume), review, picture)
+    if request.content_type == "image/jpeg":
+        # max file size 500kb
+        if request.content_length > 500000:
+            return "file too big", 400
+
+        picture_filename = hashlib.sha256((str(datetime.datetime.now()) + str(user_id)).encode("utf-8")).hexdigest()
+        new_file = open(os.path.join("post_pictures", (picture_filename + ".jpg")), "wb")
+        new_file.write(request.get_data())
+
+    post.submit_post(user_id, name, drink_type, float(volume), review, picture_filename)
 
     return "success", 200
 
+
 # TODO delete account, pictures
+
+@app.route("/user/set-profile-picture/<user_token>", methods=["POST"])
+def set_profile_picture(user_token):
+    user_id = auth.login_with_token(user_token)
+
+    filename_construction = str(datetime.datetime.now()) + str(user_id)
+    new_filename = hashlib.sha256(filename_construction.encode('utf-8')).hexdigest()
+
+    if request.content_type == "image/jpeg":
+        new_file = open(os.path.join("profile_pictures", (new_filename + ".jpg")), "wb")
+        new_file.write(request.get_data())
+
+        user.set_profile_picture(user_id, new_filename)
+
+        return new_filename, 201
+
+    return "wrong format", 400
+
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -3,3 +3,5 @@ config
 venv
 __pycache__
 .idea
+*/post_pictures/*
+*/profile_pictures/*
