@@ -46,3 +46,9 @@ def load_posts(user_id: int, own: bool, start: int = 0):
 
     return result
 
+
+def delete_post(user_id: str, post_id: str):
+    sql = "DELETE FROM posts WHERE user_id = %s AND post_id = %s"
+
+    database.cursor.execute(sql, [user_id, post_id])
+    database.connection.commit()

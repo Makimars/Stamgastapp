@@ -1,9 +1,9 @@
 CREATE TABLE `users` (
 	`user_id` int NOT NULL AUTO_INCREMENT,
 	`username` varchar(20) NOT NULL,
-	`password` varchar(32) NOT NULL,
+	`password` varchar(64) NOT NULL,
 	`created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-	`profile_picture` TEXT,
+	`profile_picture` varchar(64),
 	PRIMARY KEY (`user_id`)
 );
 
@@ -25,12 +25,12 @@ CREATE TABLE `tokens` (
 CREATE TABLE `posts` (
 	`post_id` int NOT NULL AUTO_INCREMENT,
 	`user_id` int NOT NULL,
-	`brand` varchar(50) NOT NULL,
-	`product` varchar(50) NOT NULL,
+	`name` varchar(50) NOT NULL,
+	`type` varchar(50) NOT NULL DEFAULT "jiné",
 	`volume` FLOAT NOT NULL,
 	`review` text,
 	`created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-	`picture` text,
+	`picture` varchar(64),
 	PRIMARY KEY (`post_id`)
 );
 

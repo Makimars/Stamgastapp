@@ -1,5 +1,5 @@
 import database, post, user
-
+import json
 database.connection = database.get_connection()
 database.cursor = database.connection.cursor()
 
@@ -12,7 +12,11 @@ database.cursor = database.connection.cursor()
 # user.accept_friend_invite(1,3)
 
 # post.submit_post(3,"birrel", "plechovka", 0.3)
-print(post.load_posts(1, False))
+# print(post.load_posts(1, False))
 # print(user.get_friends(3))
 
 # print(user.search("han"))
+
+database.cursor.execute("select * from users")
+# print(json.dumps(database.cursor.fetchall()))
+print(json.dumps(database.cursor.description))

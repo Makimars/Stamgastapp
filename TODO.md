@@ -1,12 +1,12 @@
-# Phase 2
+error handling
 
-- web server that accepts web requests as defined by API
+- picture handling
 
-- error handling
+- deleting accounts and posts
 
 # Phase 3
 
-- androud app
+- android app
   
   - flutter??? 
   

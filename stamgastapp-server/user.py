@@ -1,79 +1,7 @@
 # login, register, add friend, get friends
 import database
 
-import hashlib
-import datetime
-
-
-# login
-def get_auth_token(username: str, password: str):
-    sql = ('select password,user_id from users where username = "%s";' % username)
-    database.cursor.execute(sql)
-    result = database.cursor.fetchone()
-
-    if result[0] != password:
-        print("bad password or username")
-        raise Exception
-
-    token = hashlib.md5((username + str(datetime.datetime.now())).encode('utf-8')).hexdigest()
-    sql = ('insert into tokens (user_id, token) values (%s, "%s");' % (result[1], str(token)))
-
-    print(sql)
-
-    database.cursor.execute(sql)
-    database.connection.commit()
-
-    return token  # succesfully logged in
-
-
-# register
-def register_new_user(username: str, password: str):
-    # validate the username
-    if len(username) > 20:
-        print("Username too long")
-        exit()
-    if username.__contains__(' '):
-        print("Invalid username, contains space")
-        exit()
-
-    # validate the password
-    if len(password) > 32:
-        print("Password too long")
-        exit()
-    elif len(password) < 4:
-        print("password too short")
-        exit()
-
-    sql = "select * from users where username = %s;"
-    database.cursor.execute(sql, [username])
-
-    result = database.cursor.fetchall()
-    if len(result) != 0:
-        print("username already exists")
-        exit()
-
-    sql = 'INSERT INTO users (username, password) VALUES (%s, %s);'
-    database.cursor.execute(sql, (username, password))
-    database.connection.commit()
-
-
-# get user_id from token and assure that the token is valid
-def login_with_token(token: str):
-    max_age_of_token = 365
-    sql = 'SELECT user_id, created_at FROM tokens WHERE token = "%s" ORDER BY created_at DESC;' % token
-    database.cursor.execute(sql)
-    result = database.cursor.fetchone()
-
-    if len(result) != 2:
-        raise Exception("Invalid token")
-    else:
-        user_id = result[0]
-        created_at = datetime.datetime.fromisoformat(str(result[1]))
-
-        if datetime.datetime.now() - created_at > datetime.timedelta(days=max_age_of_token):
-            raise Exception("Expired token")
-        else:
-            return user_id
+import os
 
 
 def get_friends(user_id):
@@ -92,8 +20,12 @@ def get_friends(user_id):
     return database.cursor.fetchall()
 
 
-# TODO: check if exists, if so, don't add another one
 def send_friend_request(user_id: int, target_user_id: int):
+    sql = "SELECT friendship_id FROM friends WHERE requester_user_id = %s AND target_user_id = %s"
+    database.cursor.execute(sql, [user_id, target_user_id])
+    if len(database.cursor.fetchall) > 0:
+        return
+
     sql = 'INSERT INTO friends (requester_user_id, target_user_id) VALUES (%s, %s);'
     database.cursor.execute(sql, [user_id, target_user_id])
     database.connection.commit()
@@ -129,5 +61,19 @@ def delete_friendship_record(user_id: int, friendship_id: int):
 # searches people by username
 def search(pattern: str):
     sql = 'SELECT user_id, username, profile_picture FROM users WHERE username LIKE %s'
-    database.cursor.execute(sql, ["%"+pattern+"%"])
+    database.cursor.execute(sql, ["%" + pattern + "%"])
     return database.cursor.fetchall()
+
+
+def set_profile_picture(user_id: int, profile_picture_filename: str):
+    sql = "SELECT user_id, profile_picture FROM users WHERE user_id = %s"
+    database.cursor.execute(sql, [user_id])
+    result = database.cursor.fetchall()
+
+    if len(result) > 1:
+        old_file = "profile_pictures/" + result[1] + ".jpg"
+        if os.path.exists(old_file):
+            os.remove(old_file)
+
+    sql = "UPDATE users SET profile_picture = %s WHERE user_id = %s"
+    database.cursor.execute(sql, [profile_picture_filename, user_id])
