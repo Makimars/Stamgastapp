@@ -1,8 +1,10 @@
+# Now
+
 error handling
 
-- picture handling
+maybe save default pictures as base64 already? or some kind of caching of profile pictures
 
-- deleting accounts and posts
+- have the default on the client and not send anything
 
 # Phase 3
 
@@ -15,8 +17,6 @@ error handling
   - decide based on portability and ad availability
 
 # Phase 4
-
-- pictures
 
 - legal stuff
 
