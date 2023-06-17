@@ -6,6 +6,8 @@ def get_auth_token(username: str, password: str):
     sql = ('select password,user_id from users where username = "%s";' % username)
     database.cursor.execute(sql)
     result = database.cursor.fetchone()
+    if result is None:
+        raise Exception("bad password or username") # username
 
     if result[0] != hashlib.sha256(password.encode('utf-8')).hexdigest():
         raise Exception("bad password or username")

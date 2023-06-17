@@ -2,11 +2,25 @@
 import database
 
 import os
+import base64
+
+
+# creates a json object from ordered list of user attributes
+# user_id, username, created_at, profile_picture
+def load_user(user_record):
+    user = {"user_id": user_record[0], "username": user_record[1], "created_At": user_record[2]}
+
+    if user_record[3] == "default" or user_record[3] is None:
+        user["profile_picture"] = "default"
+    else:
+        filename = os.path.join("profile_pictures", user_record[3] + ".jpg")
+        user["profile_picture"] = str(base64.standard_b64encode(open(filename, 'rb').read()))
+    return user
 
 
 def get_friends(user_id):
     sql = """
-    SELECT username, profile_picture, created_at FROM(
+    SELECT user_id, username, created_at, profile_picture FROM(
             SELECT * FROM users RIGHT JOIN 
                 (SELECT target_user_id AS friend_user_id FROM friends WHERE requester_user_id = %s AND accepted = TRUE) AS friends1
                 ON users.user_id = friends1.friend_user_id
@@ -17,7 +31,10 @@ def get_friends(user_id):
         ) AS results ORDER BY created_at DESC;
     """
     database.cursor.execute(sql, [user_id, user_id])
-    return database.cursor.fetchall()
+    users = []
+    for record in database.cursor.fetchall():
+        users.append(load_user(record))
+    return users
 
 
 def send_friend_request(user_id: int, target_user_id: int):
@@ -34,13 +51,20 @@ def send_friend_request(user_id: int, target_user_id: int):
 # loads incoming friend requests
 def load_friend_requests(user_id: int):
     sql = """
-    SELECT friendship_id, username, user_id, profile_picture FROM
+    SELECT user_id, username, created_at, profile_picture, friendship_id FROM
         (SELECT * FROM friends WHERE target_user_id = %s AND accepted = FALSE) AS friends
     LEFT JOIN users ON 
         friends.requester_user_id = users.user_id;
     """
+
     database.cursor.execute(sql, [user_id])
-    return database.cursor.fetchall()
+    results = database.cursor.fetchall()
+    friends = []
+    for i in range(len(results)):
+        user = load_user(results[i])
+        user['friendship_id'] = results[i, 4]
+        friends.append(user)
+    return friends
 
 
 # accepts a friend request

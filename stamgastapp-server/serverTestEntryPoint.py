@@ -8,7 +8,7 @@ database.cursor = database.connection.cursor()
 # user.register_new_user("jan_bodlak", "pokus")
 
 # user.send_friend_request(3, 1)
-#print(user.load_friend_requests(2))
+# print(user.load_friend_requests(2))
 # user.accept_friend_invite(1,3)
 
 # post.submit_post(3,"birrel", "plechovka", 0.3)
@@ -17,6 +17,8 @@ database.cursor = database.connection.cursor()
 
 # print(user.search("han"))
 
-database.cursor.execute("select * from users")
+# database.cursor.execute("select * from users")
 # print(json.dumps(database.cursor.fetchall()))
-print(json.dumps(database.cursor.description))
+# print(json.dumps(database.cursor.description))
+
+print(user.get_friends(2))

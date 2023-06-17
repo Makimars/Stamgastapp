@@ -76,6 +76,10 @@ def unfriend(user_token):
 
     return "success", 200
 
+# TODO
+@app.route("/user/<user_token>")
+def get_user_info(user_token):
+    pass
 
 @app.route("/user/search/<user_token>")
 def search_users(user_token):
@@ -141,7 +145,7 @@ def new_post(user_token):
     return "success", 200
 
 
-# TODO delete account, pictures
+# TODO delete account
 
 @app.route("/user/set-profile-picture/<user_token>", methods=["POST"])
 def set_profile_picture(user_token):
