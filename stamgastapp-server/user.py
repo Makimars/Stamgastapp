@@ -3,6 +3,7 @@ import database
 
 import os
 import base64
+import post
 
 
 # creates a json object from ordered list of user attributes
@@ -94,7 +95,7 @@ def set_profile_picture(user_id: int, profile_picture_filename: str):
     database.cursor.execute(sql, [user_id])
     result = database.cursor.fetchone()
 
-    if len(result) > 1:
+    if result[1] is not None and result[1] != "default":
         old_file = os.path.join("profile_pictures", (result[1] + ".jpg"))
         if os.path.exists(old_file):
             os.remove(old_file)
@@ -102,3 +103,33 @@ def set_profile_picture(user_id: int, profile_picture_filename: str):
     sql = "UPDATE users SET profile_picture = %s WHERE user_id = %s"
     database.cursor.execute(sql, [profile_picture_filename, user_id])
     database.connection.commit()
+
+
+def get_user_info(user_id):
+    sql = "SELECT user_id, username, created_at, profile_picture FROM users WHERE user_id = %s"
+    database.cursor.execute(sql, [user_id])
+
+    user = load_user(database.cursor.fetchone())
+    return user
+
+
+def delete_user(user_id):
+    sql = "SELECT post_id FROM posts WHERE user_id = %s"
+    database.cursor.execute(sql, [user_id])
+    post_list = database.cursor.fetchall()
+
+    # delete all posts
+    for one_post in post_list:
+        post.delete_post(user_id, one_post[0])
+
+    sql = "DELETE FROM friends WHERE target_user_id = %s OR requester_user_id = %s"
+    database.cursor.execute(sql, [user_id, user_id])
+
+    # deletes the current profile picture
+    set_profile_picture(user_id, "default")
+
+    sql = "DELETE FROM users WHERE user_id = %d"
+    database.cursor.execute(sql, [user_id])
+
+    database.connection.commit()
+    return

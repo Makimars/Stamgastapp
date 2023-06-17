@@ -21,4 +21,5 @@ database.cursor = database.connection.cursor()
 # print(json.dumps(database.cursor.fetchall()))
 # print(json.dumps(database.cursor.description))
 
-print(user.get_friends(2))
+# print(user.get_friends(2))
+user.delete_user(2)
