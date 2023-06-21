@@ -20,20 +20,37 @@ app = Flask(__name__)
 
 
 def try_to_login_with_token(user_token):
-    user_id = 0
     try:
-        user_id = auth.login_with_token(user_token)
+        # this needs sql injection prevention
+        for char in user_token:
+            if char not in '1234567890abcdef':
+                flask.abort(401)
+        return auth.login_with_token(user_token)
     except Exception:
         flask.abort(401)
-    return user_id
+
+
+def username_password_checker(input: str):
+    disallowed_chars = [' ', '*', ';', '$', '%']
+    if any(c in input for c in disallowed_chars):
+        flask.abort(400)
+    else:
+        return input
+
+
+def filter_sql_str_argument(argument: str):
+    argument.replace(' ', '')
+    argument.replace('*', '')
+    argument.replace(';', '')
+    return argument
 
 
 @app.route("/auth/login")
 def login():
     data = request.get_json()
     try:
-        username = data["username"]
-        password = data["password"]
+        username = username_password_checker(data["username"])
+        password = username_password_checker(data["password"])
         token = auth.get_auth_token(username, password)
     except Exception as e:
         return str(e.args), 400
@@ -45,8 +62,8 @@ def login():
 def register():
     data = request.get_json()
     try:
-        username = data['username']
-        password = data['password']
+        username = username_password_checker(data["username"])
+        password = username_password_checker(data["password"])
         auth.register_new_user(username, password)
     except Exception as e:
         return str(e.args), 400
@@ -136,14 +153,18 @@ def get_profile_picture(user_token):
     picture_to_get = request.args.get("filename")
     if picture_to_get is None:
         return "invalid filename", 400
+    if len(picture_to_get) is not 64 or picture_to_get.__contains__('*') or picture_to_get.__contains__('/'):
+        return "invalid filename", 400
 
-    try:
-        filename = os.path.join("profile_pictures", picture_to_get + ".jpg")
-        picture = str(base64.standard_b64encode(open(filename, 'rb').read()))
-    except FileNotFoundError:
+    filename = os.path.join("profile_pictures", picture_to_get + ".jpg")
+    if not os.path.exists(filename):
         return "file not found", 400
-
-    return picture, 200
+    else:
+        try:
+            picture = str(base64.standard_b64encode(open(filename, 'rb').read()))
+            return picture, 200
+        except Exception:
+            return "smth went wrong", 500
 
 
 @app.route("/user/search/<user_token>")
@@ -155,7 +176,7 @@ def search_users(user_token):
     if len(params) < 3:
         return "too short params", 400
 
-    results = user.search(params)
+    results = user.search(username_password_checker(params))
 
     return jsonify(results), 200
 
@@ -184,7 +205,7 @@ def load_posts(user_token):
 def delete_post(user_token):
     user_id = try_to_login_with_token(user_token)
     if not request.args.get("post_id"):
-        return "invalid post_id", 400
+        return "no post_id", 400
 
     try:
         post_id = int(request.args.get("post_id"))
@@ -235,12 +256,19 @@ def new_post(user_token):
         tmp_file.write(request.get_data())
 
         image = Image.open(picture_filename_with_path)
+        try:
+            image.verify()
+        except Exception:
+            os.remove(picture_filename_with_path)
+            return "corrupted picture", 400
+
         image.thumbnail((1024, 1536), Image.ANTIALIAS)
         image.save(picture_filename_with_path + ".jpg", 'JPEG', quality=70)
         os.remove(picture_filename_with_path)
 
     try:
-        post.submit_post(user_id, name, drink_type, volume, review, picture_filename)
+        post.submit_post(user_id, filter_sql_str_argument(name), drink_type, volume, filter_sql_str_argument(review),
+                         picture_filename)
     except Exception:
         return "too long review", 400
 
@@ -262,6 +290,12 @@ def set_profile_picture(user_token):
     temp_file.write(request.get_data())
 
     image = Image.open(filename_with_path)
+    try:
+        image.verify()
+    except Exception:
+        os.remove(filename_with_path)
+        return "corrupted picture", 400
+
     image.thumbnail((512, 512), Image.ANTIALIAS)
     image.save(filename_with_path + ".jpg", 'JPEG', quality=70)
 

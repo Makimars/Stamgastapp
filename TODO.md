@@ -1,12 +1,14 @@
 # Now
 
-error handling
-
 prevent sql injection
 
-send profile pictures as filenames and implement method to retrieve only the picture
+better config file
 
-- enables caching, + default will already be on the device
+- database connection and auth
+
+- hostname
+
+- production vs development switch
 
 # Phase 3
 
