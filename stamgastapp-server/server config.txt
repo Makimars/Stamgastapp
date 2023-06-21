@@ -1,0 +1,36 @@
+apt update
+apt install apache2
+ufw allow in "Apache"
+git clone http://github.com/Makimars/Stamgastapp
+
+ln -s /root/Stamgastapp/stamgastapp-server /var/stamgastapp-server
+mkdir /root/config-files
+touch /root/config-files/config
+ln -s /root/config-files/config /var/stamgastapp-server/config
+nano /root/config-files/config
+
+
+apt install mysql-server
+systemctl start mysql.service
+
+sudo mysql
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
+exit
+
+sudo mysql_secure_installation
+
+mysql -u root -p
+
+"setup the database"
+
+CREATE USER 'api'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
+
+GRANT INSERT, UPDATE, DELETE, SELECT  on stamgastapp.* TO 'api'@'localhost';
+
+
+apt install python-is-python3
+apt install python3-pip
+pip install mysql-connector-python
+pip install Pillow
+pip install Flask
+

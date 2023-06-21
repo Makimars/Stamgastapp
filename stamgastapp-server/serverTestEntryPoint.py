@@ -1,11 +1,12 @@
-import database, post, user
+import auth
+import database, post, user, auth
 import json
 database.connection = database.get_connection()
 database.cursor = database.connection.cursor()
 
 # print(get_auth_token("hana_molodka", "pass"))
 # print(login_with_token("c41541c0fe6d9d25f478f00448b34293"))
-# user.register_new_user("jan_bodlak", "pokus")
+auth.register_new_user("jan_bodlak", "pokus")
 
 # user.send_friend_request(3, 1)
 # print(user.load_friend_requests(2))

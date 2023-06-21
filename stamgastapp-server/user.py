@@ -14,8 +14,7 @@ def load_user(user_record):
     if user_record[3] == "default" or user_record[3] is None:
         user["profile_picture"] = "default"
     else:
-        filename = os.path.join("profile_pictures", user_record[3] + ".jpg")
-        user["profile_picture"] = str(base64.standard_b64encode(open(filename, 'rb').read()))
+        user["profile_picture"] = user_record[3]
     return user
 
 
@@ -41,7 +40,7 @@ def get_friends(user_id):
 def send_friend_request(user_id: int, target_user_id: int):
     sql = "SELECT friendship_id FROM friends WHERE requester_user_id = %s AND target_user_id = %s"
     database.cursor.execute(sql, [user_id, target_user_id])
-    if len(database.cursor.fetchall) > 0:
+    if len(database.cursor.fetchall()) > 0:
         return
 
     sql = 'INSERT INTO friends (requester_user_id, target_user_id) VALUES (%s, %s);'
@@ -61,10 +60,12 @@ def load_friend_requests(user_id: int):
     database.cursor.execute(sql, [user_id])
     results = database.cursor.fetchall()
     friends = []
+
     for i in range(len(results)):
         user = load_user(results[i])
-        user['friendship_id'] = results[i, 4]
+        user['friendship_id'] = results[i][4]
         friends.append(user)
+
     return friends
 
 
@@ -76,18 +77,22 @@ def accept_friend_request(user_id: int, friendship_id: int):
 
 
 # deletes the friendship record (unfriends)
-def delete_friendship_record(user_id: int, friendship_id: int):
-    sql = 'DELETE FROM friends WHERE friendship_id = %s'
+def delete_friendship_record(user_id: int, target_user_id: int):
+    sql = 'DELETE FROM friends WHERE ' \
+          '(requester_user_id = %s AND target_user_id = %s) OR (requester_user_id = %s AND target_user_id = %s)'
 
-    database.cursor.execute(sql, [friendship_id])
+    database.cursor.execute(sql, [user_id, target_user_id, target_user_id, user_id])
     database.connection.commit()
 
 
 # searches people by username
 def search(pattern: str):
-    sql = 'SELECT user_id, username, profile_picture FROM users WHERE username LIKE %s'
+    sql = 'SELECT user_id, username, created_at, profile_picture FROM users WHERE username LIKE %s'
     database.cursor.execute(sql, ["%" + pattern + "%"])
-    return database.cursor.fetchall()
+    users = []
+    for record in database.cursor.fetchall():
+        users.append(load_user(record))
+    return users
 
 
 def set_profile_picture(user_id: int, profile_picture_filename: str):

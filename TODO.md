@@ -2,19 +2,19 @@
 
 error handling
 
-maybe save default pictures as base64 already? or some kind of caching of profile pictures
+prevent sql injection
 
-- have the default on the client and not send anything
+send profile pictures as filenames and implement method to retrieve only the picture
+
+- enables caching, + default will already be on the device
 
 # Phase 3
 
 - android app
   
-  - flutter??? 
+  - flutter
   
-  - or java probably
-  
-  - decide based on portability and ad availability
+  - PWA for iOS
 
 # Phase 4
 

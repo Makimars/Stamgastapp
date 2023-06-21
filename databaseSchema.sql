@@ -18,7 +18,7 @@ CREATE TABLE `tokens` (
 	`token_id` int NOT NULL AUTO_INCREMENT,
 	`user_id` int NOT NULL,
 	`created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-    `token` varchar(32) NOT NULL,
+    	`token` varchar(64) NOT NULL,
 	PRIMARY KEY (`token_id`)
 );
 
@@ -26,7 +26,7 @@ CREATE TABLE `posts` (
 	`post_id` int NOT NULL AUTO_INCREMENT,
 	`user_id` int NOT NULL,
 	`name` varchar(50) NOT NULL,
-	`type` varchar(50) NOT NULL DEFAULT "jiné",
+	`type` SMALLINT NOT NULL DEFAULT 0,
 	`volume` FLOAT NOT NULL,
 	`review` text,
 	`created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,

@@ -5,7 +5,7 @@ import base64
 import database
 
 
-def submit_post(user_id: int, name: str, drink_type: str, volume: float, review: str = "", picture: str = ""):
+def submit_post(user_id: int, name: str, drink_type: int, volume: float, review: str = "", picture: str = ""):
     max_post_length = 1000
     if len(review) > max_post_length:
         raise Exception("too long review")
@@ -61,7 +61,7 @@ def load_posts(user_id: int, own: bool, start: int = 0):
     return all_posts
 
 
-def delete_post(user_id: str, post_id: str):
+def delete_post(user_id: str, post_id: int):
     sql = "SELECT picture FROM posts WHERE user_id = %s AND post_id = %s"
     database.cursor.execute(sql, [user_id, post_id])
     result = database.cursor.fetchone()
