@@ -16,6 +16,11 @@ import auth
 database.connection = database.get_connection()
 database.cursor = database.connection.cursor()
 
+if not os.path.exists("profile_pictures"):
+    os.makedirs("profile_pictures")
+if not os.path.exists("post_pictures"):
+    os.makedirs("post_pictures")
+
 app = Flask(__name__)
 
 

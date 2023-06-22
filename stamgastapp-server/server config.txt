@@ -1,31 +1,35 @@
 apt update
 apt install apache2
 ufw allow in "Apache"
-git clone http://github.com/Makimars/Stamgastapp
-
-ln -s /root/Stamgastapp/stamgastapp-server /var/stamgastapp-server
-mkdir /root/config-files
-touch /root/config-files/config
-ln -s /root/config-files/config /var/stamgastapp-server/config
-nano /root/config-files/config
-
+ufw allow 5000
 
 apt install mysql-server
 systemctl start mysql.service
 
+
+
 sudo mysql
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
 exit
-
 sudo mysql_secure_installation
-
 mysql -u root -p
-
-"setup the database"
-
+# "setup the database"
 CREATE USER 'api'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
-
 GRANT INSERT, UPDATE, DELETE, SELECT  on stamgastapp.* TO 'api'@'localhost';
+
+
+
+adduser server
+su server
+git clone http://github.com/Makimars/Stamgastapp
+mv Stamgastapp Stamgastapp-1
+mkdir config-files
+touch config-files/config
+nano config-files/config
+ln -s /home/server/config-files/config /home/server/Stamgastapp-1/stamgastapp-server/config
+cp -r Stamgastapp-1 Stamgastapp-2
+
+ln -s /home/server/Stamgastapp-1/stamgastapp-server /var/stamgastapp-server
 
 
 apt install python-is-python3
@@ -33,4 +37,22 @@ apt install python3-pip
 pip install mysql-connector-python
 pip install Pillow
 pip install Flask
+pip install gunicorn
+
+ nano /etc/systemd/system/stamgastapp.service
+ 
+[Unit]
+Description=Stamgast app python server service
+After=network.target
+
+[Service]
+User=server
+Group=www-data
+WorkingDirectory=/var/stamgastapp-server
+Environment="PATH=/var/stamgastapp-server/"
+ExecStart="gunicorn --workers 4 --bind stamgast.app:5000 'wsgi:app'"
+
+[Install]
+WantedBy=multi-user.target
+
 
