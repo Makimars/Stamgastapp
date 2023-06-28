@@ -13,8 +13,8 @@ import auth
 
 try:
     import database
-except Exception as e:
-    print(e.args)
+except Exception as ex:
+    print(ex.args)
     raise HTTPException(500)
 
 if not os.path.exists("profile_pictures"):
@@ -37,7 +37,7 @@ def try_to_login_with_token(user_token):
 
 
 def username_password_checker(input_string: str):
-    disallowed_chars = [' ', '*', ';', '$', '%']
+    disallowed_chars = [' ', '*', ';']
     if any(c in input_string for c in disallowed_chars):
         raise HTTPException(400)
     else:
@@ -63,7 +63,7 @@ def login(data: UserData):
         password = username_password_checker(data.password)
         token = auth.get_auth_token(username, password)
     except Exception as e:
-        return str(e.args), 400
+        raise HTTPException(400, e.args)
 
     return token
 
@@ -75,9 +75,9 @@ def register(data: UserData):
         password = username_password_checker(data.password)
         auth.register_new_user(username, password)
     except Exception as e:
-        return str(e.args), 400
+        raise HTTPException(400, e.args)
 
-    return "success", 201
+    return "success"
 
 
 @app.get("/user/friends/{user_token}")
@@ -129,7 +129,7 @@ def get_user_info(user_token, user_id: int):
 @app.get("/user/profile-picture/{user_token}")
 def get_profile_picture(user_token: str, filename: str):
     try_to_login_with_token(user_token)
-    if len(filename) is not 64 or filename.__contains__('*') or filename.__contains__('/'):
+    if len(filename) != 64 or filename.__contains__('*') or filename.__contains__('/'):
         raise HTTPException(400, "Invalid filename")
 
     full_filename = os.path.join("profile_pictures", filename + ".jpg")
@@ -138,9 +138,9 @@ def get_profile_picture(user_token: str, filename: str):
     else:
         try:
             picture = str(standard_b64encode(open(full_filename, 'rb').read()))
-            return picture, 200
+            return picture
         except Exception:
-            return "smth went wrong", 500
+            raise HTTPException(500, "smth went wrong")
 
 
 @app.get("/user/search/{user_token}")
@@ -227,23 +227,20 @@ def set_profile_picture(user_token, file: UploadFile):
     filename = sha256(filename_construction.encode('utf-8')).hexdigest()
     filename_with_path = os.path.join("profile_pictures", filename)
 
-    temp_file = open(filename_with_path, "wb")
-    temp_file.write(file.file.read())
-    temp_file.close()
+    with open(filename_with_path, "wb") as temp_file:
+        temp_file.write(file.file.read())
 
-    image = Image.open(filename_with_path)
-    try:
-        image.verify()
-    except Exception:
-        os.remove(filename_with_path)
-        raise HTTPException(400, "corrupted picture")
+    with Image.open(filename_with_path) as image:
+        try:
+            image.verify()
+        except Exception:
+            os.remove(filename_with_path)
+            raise HTTPException(400, "corrupted picture")
 
-    print(filename_with_path)
-
-    image = Image.open(filename_with_path)
-    image.thumbnail((512, 512), Image.ANTIALIAS)
-    image.save(filename_with_path + ".jpg", 'JPEG', quality=70)
-    image.close()
+    with Image.open(filename_with_path) as image:
+        image = Image.open(filename_with_path)
+        image.thumbnail((512, 512), Image.ANTIALIAS)
+        image.save(filename_with_path + ".jpg", 'JPEG', quality=70)
 
     os.remove(filename_with_path)
 
