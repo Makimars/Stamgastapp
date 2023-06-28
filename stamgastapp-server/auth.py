@@ -31,7 +31,7 @@ def register_new_user(username: str, password: str):
         raise Exception("Invalid username, contains space")
 
     # validate the password
-    elif len(password) < 4:
+    if len(password) < 4:
         raise Exception("password too short")
 
     sql = "select * from users where username = %s;"
@@ -60,11 +60,11 @@ def login_with_token(token: str):
 
     if len(result) != 2:
         raise Exception("Invalid token")
-    else:
-        user_id = result[0]
-        created_at = datetime.datetime.fromisoformat(str(result[1]))
 
-        if datetime.datetime.now() - created_at > datetime.timedelta(days=max_age_of_token):
-            raise Exception("Expired token")
-        else:
-            return user_id
+    user_id = result[0]
+    created_at = datetime.datetime.fromisoformat(str(result[1]))
+
+    if datetime.datetime.now() - created_at > datetime.timedelta(days=max_age_of_token):
+        raise Exception("Expired token")
+
+    return user_id
