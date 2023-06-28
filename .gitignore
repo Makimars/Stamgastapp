@@ -7,3 +7,4 @@ __pycache__
 */profile_pictures/*
 !stamgastapp-server/post_pictures/default.jpg
 !stamgastapp-server/profile_pictures/default.jpg
+*.swp
