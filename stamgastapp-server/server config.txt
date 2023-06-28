@@ -30,14 +30,17 @@ ln -s /home/server/config-files/config /home/server/Stamgastapp-1/stamgastapp-se
 cp -r Stamgastapp-1 Stamgastapp-2
 
 ln -s /home/server/Stamgastapp-1/stamgastapp-server /var/stamgastapp-server
+# rm /var/stamgastapp-server
+ln -s /home/server/Stamgastapp-2/stamgastapp-server /var/stamgastapp-server
 
 
 apt install python-is-python3
 apt install python3-pip
 pip install mysql-connector-python
 pip install Pillow
-pip install Flask
-pip install gunicorn
+pip install python-multipart
+pip install fastapi
+pip install uvicorn
 
  nano /etc/systemd/system/stamgastapp.service
  
@@ -48,9 +51,9 @@ After=network.target
 [Service]
 User=server
 Group=www-data
-WorkingDirectory=/var/stamgastapp-server
+WorkingDirectory=/var/stamgastapp-server/
 Environment="PATH=/var/stamgastapp-server/"
-ExecStart="gunicorn --workers 4 --bind stamgast.app:5000 'wsgi:app'"
+ExecStart=gunicorn --workers 4 --bind 172.104.139.209:5000 /var/stamgastapp-server/wsgi:app
 
 [Install]
 WantedBy=multi-user.target

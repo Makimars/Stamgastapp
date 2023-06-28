@@ -3,13 +3,14 @@ import database, hashlib, datetime
 
 # login
 def get_auth_token(username: str, password: str):
-    sql = ('select password,user_id from users where username = "%s";' % username)
+    sql = ('select password,user_id,salt from users where username = "%s";' % username)
     database.cursor.execute(sql)
     result = database.cursor.fetchone()
     if result is None:
-        raise Exception("bad password or username")  # username
+        raise Exception("bad password or username")  # username does not exist
 
-    if result[0] != hashlib.sha256(password.encode('utf-8')).hexdigest():
+    hashed_password = hashlib.sha256((password + result[2]).encode('utf-8')).hexdigest()
+    if result[0] != hashed_password:
         raise Exception("bad password or username")
 
     token = hashlib.sha256((username + str(datetime.datetime.now())).encode('utf-8')).hexdigest()
@@ -30,8 +31,6 @@ def register_new_user(username: str, password: str):
         raise Exception("Invalid username, contains space")
 
     # validate the password
-    if len(password) > 32:
-        raise Exception("Password too long")
     elif len(password) < 4:
         raise Exception("password too short")
 
@@ -42,8 +41,11 @@ def register_new_user(username: str, password: str):
     if len(result) != 0:
         raise Exception("username already exists")
 
-    sql = 'INSERT INTO users (username, password) VALUES (%s, %s);'
-    database.cursor.execute(sql, (username, hashlib.sha256(password.encode('utf-8')).hexdigest()))
+    salt = hashlib.md5(datetime.datetime.now().__str__().encode('utf-8')).hexdigest()  # 32 chars
+    hashed_password = hashlib.sha256((password + salt).encode('utf-8')).hexdigest()
+
+    sql = 'INSERT INTO users (username, password, salt) VALUES (%s, %s, %s);'
+    database.cursor.execute(sql, (username, hashed_password, salt))
     database.connection.commit()
 
 

@@ -1,6 +1,6 @@
 # Now
 
-prevent sql injection
+change string formatting (+prepared sql)
 
 better config file
 
@@ -9,6 +9,8 @@ better config file
 - hostname
 
 - production vs development switch
+
+use iptables for firewall
 
 # Phase 3
 
