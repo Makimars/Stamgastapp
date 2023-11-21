@@ -15,7 +15,7 @@ try:
     import database
 except Exception as ex:
     print(ex.args)
-    raise HTTPException(500)
+    raise HTTPException(500) from ex
 
 if not os.path.exists("profile_pictures"):
     os.makedirs("profile_pictures")
@@ -32,16 +32,16 @@ def try_to_login_with_token(user_token):
             if char not in '1234567890abcdef':
                 raise HTTPException(401)
         return auth.login_with_token(user_token)
-    except Exception:
-        raise HTTPException(401)
+    except Exception as e:
+        raise HTTPException(401) from e
 
 
 def username_password_checker(input_string: str):
     disallowed_chars = [' ', '*', ';']
     if any(c in input_string for c in disallowed_chars):
         raise HTTPException(400)
-    else:
-        return input_string
+
+    return input_string
 
 
 def filter_sql_str_argument(argument: str):
@@ -63,7 +63,7 @@ def login(data: UserData):
         password = username_password_checker(data.password)
         token = auth.get_auth_token(username, password)
     except Exception as e:
-        raise HTTPException(400, e.args)
+        raise HTTPException(400, e.args) from e
 
     return token
 
@@ -75,7 +75,7 @@ def register(data: UserData):
         password = username_password_checker(data.password)
         auth.register_new_user(username, password)
     except Exception as e:
-        raise HTTPException(400, e.args)
+        raise HTTPException(400, e.args) from e
 
     return "success"
 
@@ -135,12 +135,13 @@ def get_profile_picture(user_token: str, filename: str):
     full_filename = os.path.join("profile_pictures", filename + ".jpg")
     if not os.path.exists(full_filename):
         raise HTTPException(400, "file not found")
-    else:
-        try:
-            picture = str(standard_b64encode(open(full_filename, 'rb').read()))
-            return picture
-        except Exception:
-            raise HTTPException(500, "smth went wrong")
+
+    try:
+        with open(full_filename, 'rb') as file:
+            picture = str(standard_b64encode(file.read()))
+        return picture
+    except Exception as e:
+        raise HTTPException(500, "smth went wrong") from e
 
 
 @app.get("/user/search/{user_token}")
@@ -172,8 +173,8 @@ def delete_post(user_token: str, post_id: int):
         return "success"
     except Exception as ex:
         if ex.args == "post not found":
-            raise HTTPException(400, "post not found")
-        raise HTTPException(500, "request failed")
+            raise HTTPException(400, "post not found") from ex
+        raise HTTPException(500, "request failed") from ex
 
 
 class Post(BaseModel):
@@ -196,7 +197,7 @@ def new_post(user_token, post_data: Post):
             with open(picture_filename_with_path, "wb") as tmp_file:
                 tmp_file.write(standard_b64decode(post_data.picture))
         except Exception as e:
-            raise HTTPException(400, "invalid file")
+            raise HTTPException(400, "invalid file") from e
 
         try:
             with Image.open(picture_filename_with_path) as image:
@@ -233,12 +234,10 @@ def set_profile_picture(user_token, file: UploadFile):
     with Image.open(filename_with_path) as image:
         try:
             image.verify()
-        except Exception:
+        except Exception as e:
             os.remove(filename_with_path)
-            raise HTTPException(400, "corrupted picture")
+            raise HTTPException(400, "corrupted picture") from e
 
-    with Image.open(filename_with_path) as image:
-        image = Image.open(filename_with_path)
         image.thumbnail((512, 512), Image.ANTIALIAS)
         image.save(filename_with_path + ".jpg", 'JPEG', quality=70)
 

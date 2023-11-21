@@ -50,7 +50,8 @@ def load_posts(user_id: int, own: bool, start: int = 0):
             picture = "default"
         else:
             filename = os.path.join("post_pictures", record[7] + ".jpg")
-            picture = str(base64.standard_b64encode(open(filename, 'rb').read()))
+            with open(filename, 'rb') as file:
+                picture = str(base64.standard_b64encode(file.read()))
 
         one_post = {
             "post_id": record[0], "user_id": record[1], "name": record[2], "type": record[3],

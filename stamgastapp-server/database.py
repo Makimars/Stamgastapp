@@ -5,13 +5,12 @@ connection = None
 cursor = None
 
 
-f = open("config", "r")
-lines = f.readlines()
+with open("config", "r") as f:
+    lines = f.readlines()
 sql_user = lines[0].strip()
 sql_password = lines[1].strip()
 host = lines[2].strip()
 database_name = lines[3].strip()
-f.close()
 
 try:
     connection = mysql.connector.connect(user=sql_user, password=sql_password, host=host, database=database_name)
@@ -22,6 +21,6 @@ except mysql.connector.Error as err:
         print("Database does not exist")
     else:
         print(err)
-    raise Exception("database connection failed")
+    raise Exception("database connection failed") from err
 
 cursor = connection.cursor()
